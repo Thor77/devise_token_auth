@@ -9,7 +9,14 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     after_action :update_auth_header
   end
 
+
   protected
+
+  class FakeRackSession < Hash
+    def enabled?
+      false
+    end
+  end
 
   # keep track of request duration
   def set_request_start
@@ -24,6 +31,10 @@ module DeviseTokenAuth::Concerns::SetUserByToken
 
   # user auth
   def set_user_by_token(mapping = nil)
+    if Rails.configuration.respond_to?(:api_only) && Rails.configuration.api_only
+      request.env['rack.session'] ||= FakeRackSession.new
+    end
+
     # determine target authentication class
     rc = resource_class(mapping)
 
